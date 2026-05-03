@@ -42,3 +42,5 @@ terraform
 dist/
 
 credentials-*.json
+# Claude Code session artifacts
+.omc/

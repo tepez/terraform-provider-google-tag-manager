@@ -112,6 +112,12 @@ func toApiParameter(resourceParameter []ResourceParameterModel) []*tagmanager.Pa
 }
 
 func toResourceParameter(parameter []*tagmanager.Parameter) []ResourceParameterModel {
+	// Return nil (not empty slice) when API has no parameters, so state matches
+	// what `lookup(each.value, "parameter", null)` evaluates to in HCL when the
+	// data file omits the field. Otherwise plan shows `[] -> null` diffs.
+	if len(parameter) == 0 {
+		return nil
+	}
 	var resourceParameter []ResourceParameterModel = make([]ResourceParameterModel, len(parameter))
 
 	for i, p := range parameter {
@@ -184,6 +190,11 @@ func toApiCondition(resourceCondition []resourceConditionModel) []*tagmanager.Co
 }
 
 func toResourceCondition(condition []*tagmanager.Condition) []resourceConditionModel {
+	// Same reasoning as toResourceParameter: nil, not empty slice, so state
+	// matches HCL's `lookup(_, _, null)` semantics for omitted fields.
+	if len(condition) == 0 {
+		return nil
+	}
 	resourceCondition := make([]resourceConditionModel, len(condition))
 
 	for i, c := range condition {
