@@ -4,6 +4,7 @@ import (
 	"context"
 	"terraform-provider-google-tag-manager/internal/api"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -11,7 +12,8 @@ import (
 )
 
 var (
-	_ resource.ResourceWithConfigure = &workspaceResource{}
+	_ resource.ResourceWithConfigure   = &workspaceResource{}
+	_ resource.ResourceWithImportState = &workspaceResource{}
 )
 
 func NewWorkspaceResource() resource.Resource {
@@ -114,7 +116,7 @@ func (r *workspaceResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 
 	overwriteWorkspaceResource(workspace, &state)
-	diags = req.State.Set(ctx, &state)
+	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -149,6 +151,23 @@ func (r *workspaceResource) Update(ctx context.Context, req resource.UpdateReque
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+// ImportState reads a path of the form
+// accounts/<account>/containers/<container>/workspaces/<id> and brings the
+// workspace under Terraform management. The path's account/container/workspace
+// must match what the provider alias is configured for; mismatch is rejected.
+func (r *workspaceResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	id, err := parseImportID(req.ID, "workspaces",
+		r.client.Options.AccountId,
+		r.client.Options.ContainerId,
+		r.client.Options.WorkspaceId,
+	)
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid Workspace Import ID", err.Error())
+		return
+	}
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
 
 // Delete deletes the resource and removes the Terraform state on success.

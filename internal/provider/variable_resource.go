@@ -4,6 +4,7 @@ import (
 	"context"
 	"terraform-provider-google-tag-manager/internal/api"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -11,7 +12,8 @@ import (
 )
 
 var (
-	_ resource.ResourceWithConfigure = &variableResource{}
+	_ resource.ResourceWithConfigure   = &variableResource{}
+	_ resource.ResourceWithImportState = &variableResource{}
 )
 
 func NewVariableResource() resource.Resource {
@@ -181,6 +183,23 @@ func (r *variableResource) Update(ctx context.Context, req resource.UpdateReques
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+// ImportState reads a path of the form
+// accounts/<account>/containers/<container>/workspaces/<workspace>/variables/<id>
+// and brings the variable under Terraform management. The prefix must match the
+// provider alias's configured account/container/workspace; mismatch is rejected.
+func (r *variableResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	id, err := parseImportID(req.ID, "variables",
+		r.client.Options.AccountId,
+		r.client.Options.ContainerId,
+		r.client.Options.WorkspaceId,
+	)
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid Variable Import ID", err.Error())
+		return
+	}
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
 
 // Delete deletes the resource and removes the Terraform state on success.
