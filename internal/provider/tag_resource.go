@@ -115,7 +115,7 @@ func toApiTag(resource resourceTagModel) *tagmanager.Tag {
 	return &tagmanager.Tag{
 		Name:            resource.Name.ValueString(),
 		Type:            resource.Type.ValueString(),
-		TagId:           resource.Id.String(),
+		TagId:           resource.Id.ValueString(),
 		Notes:           resource.Notes.ValueString(),
 		Parameter:       toApiParameter(resource.Parameter),
 		FiringTriggerId: unwrapStringArray(resource.FiringTriggerId),
