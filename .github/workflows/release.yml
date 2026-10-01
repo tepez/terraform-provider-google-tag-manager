@@ -21,6 +21,11 @@ jobs:
         with:
           # Allow goreleaser to access older tag information.
           fetch-depth: 0
+      - name: Disable IPv6 (runner IPv4-only)
+        working-directory: ${{ github.workspace }}
+        run: |
+          sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+          sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
       - uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v4.0.1
         with:
           go-version-file: 'go.mod'
